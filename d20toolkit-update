@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# Copies the d20toolkit directory to a temporary location
+# minifies all .js and .css files within it, does not rename those files
+# changes the database, username, and password to match the website
+# finally uploads to the website and overwrites what was there before
+
+#This script assumes you have yui-compressor and expect installed.
+
+websiteRoot="path to d20toolkit repo"
+tempRoot="/tmp/d20toolkit"
+
+database1='"room database goes here"'
+database2='"monster database goes here"'
+databaseUser='"database admin goes here"'
+databasePassword='"database password goes here"'
+dbFile1='tools/gameroom/roomAccess.php'
+dbFile2='tools/bestiaryfuzzy/pathfinderdb.php'
+
+mkdir $tempRoot
+# copy all files and directories in the websiteRoot except those that begin with "." or end with "~"
+cp -r $websiteRoot/* $tempRoot
+
+# only get js and css files that are not already minified
+filesToCompress=$(find $tempRoot -type f \( -name "*.js" -and ! -name "*.min.js" \) -or \( -name "*.css" -and ! -name "*.min.css" \))
+for file in $filesToCompress
+do
+    filebase=$(basename $file)
+    echo "Compressing $filebase"
+    yui-compressor -o $file $file
+done
+
+# remove all temp or hidden files
+filesToDelete=$(find $tempRoot -type f \( -name "*~" \) -or \( -name ".*" \))
+for file in $filesToDelete
+do
+    filebase=$(basename $file)
+    echo "Removing $filebase"
+    rm -rf $file
+done
+
+# replace database credentials
+sed -i -e 's/new mysqli(.*)/new mysqli("localhost", '$databaseUser', '$databasePassword', '$database1')/g' $tempRoot/$dbFile1
+sed -i -e 's/new mysqli(.*)/new mysqli("localhost", '$databaseUser', '$databasePassword', '$database2')/g' $tempRoot/$dbFile2
+
+# ensure all files have the correct permissions (755)
+chmod -R 755 $tempRoot
+
+# copy website to server using expect
+# EOF separates expect from bash commands
+expect - <<EOF
+set timeout 120
+spawn bash -c "scp -r -P <port number here> /tmp/d20toolkit/* websiteUser@websiteIpAddress:pathToWebsiteRootFolder"
+expect {
+    password {
+        send "<website User's Password goes here>\r"
+        exp_continue
+    }
+    EOF {
+        exit
+    }
+}
+EOF
+
+rm -rf $tempRoot
