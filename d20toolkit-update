@@ -14,8 +14,8 @@ database1='"room database goes here"'
 database2='"monster database goes here"'
 databaseUser='"database admin goes here"'
 databasePassword='"database password goes here"'
-dbFile1='tools/gameroom/roomAccess.php'
-dbFile2='tools/bestiaryfuzzy/pathfinderdb.php'
+dbFile1='tools/gr/roomAccess.php'
+dbFile2='tools/bf/pathfinderdb.php'
 
 mkdir $tempRoot
 # copy all files and directories in the websiteRoot except those that begin with "." or end with "~"
@@ -47,13 +47,14 @@ sed -i -e 's/new mysqli(.*)/new mysqli("localhost", '$databaseUser', '$databaseP
 chmod -R 755 $tempRoot
 
 # copy website to server using expect
+# old scp command: spawn bash -c "scp -r -P <port number here> /tmp/d20toolkit/* websiteUser@websiteIpAddress:pathToWebsiteRootFolder"
 # EOF separates expect from bash commands
 expect - <<EOF
-set timeout 120
-spawn bash -c "scp -r -P <port number here> /tmp/d20toolkit/* websiteUser@websiteIpAddress:pathToWebsiteRootFolder"
+set timeout 300
+spawn bash -c "rsync --delete-before -rhzPv --chmod=755 -e 'ssh -p <port number here>' /tmp/d20toolkit/* websiteUser@websiteIpAddress:pathToWebsiteRootFolder"
 expect {
     password {
-        send "<website User's Password goes here>\r"
+        send "website User's Password goes here\r"
         exp_continue
     }
     EOF {
