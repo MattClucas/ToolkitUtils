@@ -83,3 +83,5 @@ class BestiarySpider(scrapy.Spider):
 
 #After script is run the following must be done:
 #select only unique values from mysql
+#replace \u2013 with - (this is from the initiative, should be a way to automate this)
+#use regex instead of splitting..

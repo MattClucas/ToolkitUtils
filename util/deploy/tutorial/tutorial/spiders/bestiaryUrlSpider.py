@@ -83,3 +83,8 @@ class BestiarySpider(scrapy.Spider):
 
 #After script is run the following must be done:
 #select only unique values from mysql
+#remove None element name
+#deleted summoned creatures for now
+#added 8 by hand
+#Add familiar creatures later...?
+#Error cases added in by hand
